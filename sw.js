@@ -7,6 +7,14 @@ self.addEventListener('activate',e=>{
   e.waitUntil(caches.keys().then(k=>Promise.all(k.filter(x=>x!==CACHE).map(x=>caches.delete(x))))
     .then(()=>self.clients.claim()));
 });
+self.addEventListener('message',e=>{
+  const d=e.data||{};
+  if(d.type==='cache'&&Array.isArray(d.urls)){
+    caches.open(CACHE).then(c=>d.urls.forEach(u=>{
+      c.match(u).then(hit=>{ if(!hit) fetch(u,{mode:'no-cors'}).then(r=>c.put(u,r)).catch(()=>{}); });
+    }));
+  }
+});
 self.addEventListener('fetch',e=>{
   const r=e.request;
   if(r.method!=='GET') return;
